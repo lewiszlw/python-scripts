@@ -1,3 +1,6 @@
+"""
+计算平均工时脚步
+"""
 import json, requests, time
 from datetime import datetime
 
