@@ -13,9 +13,9 @@ PAGE_CHILD_API_FORMAT = "https://***/api/pages/child/{}/{}"
 # URL formatter形式
 URL_FORMAT = "https://***/page/{}"
 # 空间id
-SPACE_ID = 1 
+SPACE_ID = 0
 # wiki本地存放地址
-DIC = "/Users/***/Documents/***/"
+DIC = "/Users/***/Documents/"
 
 def get_cookies():
     """获取cookies字典
@@ -81,14 +81,17 @@ def detection(nodes: list, files: list):
     
 
 def need_download(files: list, node: dict):
+    node_title = node["title"].replace("/", "_")
     for each_file in files:
-        if node["title"] in each_file["filename"]:
+        if node_title in each_file["filename"]:
             return True if node["modify_time"] > each_file["modify_time"] else False
     return True
 
 def main():
     nodes = []
-    query_all_nodes(nodes, get_cookies(), None)
+    cookies = get_cookies()
+    print("=============节点父子关系===========")
+    query_all_nodes(nodes, cookies, None)
     print("==============================")
     print("wiki数量：", len(nodes))
     detection(nodes, all_files(DIC))
