@@ -28,20 +28,21 @@ def extract_cookies(cookies: str) -> dict:
     """
     return {l.split("=")[0]:l.split("=")[1] for l in cookies.split("; ")}
 
-def query_all_nodes(nodes: list, cookies: dict, content_id: int):
+def query_all_nodes(nodes: list, cookies: dict, content_id: int, depth = 0):
     """递归保存所有节点的contentId和title
     Args:
         nodes: 保存的地方
         cookies: requests需要的cookies形式
         content_id: 父节点
     """
+    depth += 2
     # 获取子节点
     child_nodes = query_child_nodes(cookies, content_id)
     for child_node in child_nodes:
-        # import pdb;pdb.set_trace()
+        print("-" * depth, child_node["title"])
         nodes.append({"content_id": child_node["contentId"], "title": child_node["title"], "modify_time": child_node["modifyTime"]})
         if child_node["childCount"] != 0:
-            query_all_nodes(nodes, cookies, child_node["contentId"])
+            query_all_nodes(nodes, cookies, child_node["contentId"], depth)
 
 def query_child_nodes(cookies: dict, content_id: int = None) -> list:
     """查询当前节点的所有子节点
