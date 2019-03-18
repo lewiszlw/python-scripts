@@ -1,10 +1,9 @@
 #coding: utf-8
 
 """
-检测更新或新建的wiki
+检测更新或新建wiki脚本
 """
-
-import requests, json, os
+import requests, json, os, time
 
 # 获取空间下子节点的api formatter形式
 SPACE_CHILD_API_FORMAT = "https://***/api/spaces/child/{}"
@@ -15,7 +14,9 @@ URL_FORMAT = "https://***/page/{}"
 # 空间id
 SPACE_ID = 0
 # wiki本地存放地址
-DIC = "/Users/***/Documents/"
+DIC = "/Users/***/Documents/***/"
+# 节点关系文件
+RELATION_FILE_PATH = "/Users/***/Documents/***/节点关系"
 
 def get_cookies():
     """获取cookies字典
@@ -28,21 +29,18 @@ def extract_cookies(cookies: str) -> dict:
     """
     return {l.split("=")[0]:l.split("=")[1] for l in cookies.split("; ")}
 
-def query_all_nodes(nodes: list, cookies: dict, content_id: int, depth = 0):
-    """递归保存所有节点的contentId和title
-    Args:
-        nodes: 保存的地方
-        cookies: requests需要的cookies形式
-        content_id: 父节点
+def query_all_nodes(nodes: list, cookies: dict, content_id: int, f, depth = 0):
+    """递归保存所有节点的contentId、title 和 modifyTime
     """
     depth += 2
     # 获取子节点
     child_nodes = query_child_nodes(cookies, content_id)
     for child_node in child_nodes:
         print("-" * depth, child_node["title"])
+        f.write("-" * depth + child_node["title"] + "\n")
         nodes.append({"content_id": child_node["contentId"], "title": child_node["title"], "modify_time": child_node["modifyTime"]})
         if child_node["childCount"] != 0:
-            query_all_nodes(nodes, cookies, child_node["contentId"], depth)
+            query_all_nodes(nodes, cookies, child_node["contentId"], f, depth)
 
 def query_child_nodes(cookies: dict, content_id: int = None) -> list:
     """查询当前节点的所有子节点
@@ -87,11 +85,18 @@ def need_download(files: list, node: dict):
             return True if node["modify_time"] > each_file["modify_time"] else False
     return True
 
+def open_file():
+    f = open(RELATION_FILE_PATH, "w+")
+    f.write("version: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n\n")
+    return f
+
 def main():
     nodes = []
     cookies = get_cookies()
+    f = open_file()
     print("=============节点父子关系===========")
-    query_all_nodes(nodes, cookies, None)
+    query_all_nodes(nodes, cookies, None, f)
+    f.close()
     print("==============================")
     print("wiki数量：", len(nodes))
     detection(nodes, all_files(DIC))
